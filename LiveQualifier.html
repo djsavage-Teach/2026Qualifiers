@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bees Golf Qualifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+        :root {
+            --primary-color: #4c1d95; /* Purple */
+            --accent-gold: #f59e0b;   /* Gold */
+        }
+
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            font-family: 'Inter', sans-serif;
+        }
+
+        .active-tab { border-bottom: 4px solid var(--primary-color); color: var(--primary-color); }
+        
+        .glass-header {
+            background-color: var(--primary-color);
+            background-image: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.4));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--accent-gold);
+        }
+
+        .tabular-nums { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .row-animate {
+            animation: fadeInUp 0.4s ease forwards;
+            opacity: 0;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200%  100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .centered-container { max-width: 600px; margin: 0 auto; }
+
+        .lb-grid {
+            display: grid;
+            grid-template-columns: 32px 1fr 48px 42px;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .rank-cell { text-align: left; font-weight: 900; color: #6b7280; font-size: 0.8rem; }
+        .name-cell { display: flex; align-items: center; font-weight: 800; text-transform: uppercase; overflow: hidden; min-width: 0; }
+        .name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; flex: 1; }
+        .score-cell { text-align: center; font-weight: 900; font-style: italic; font-size: 1.1rem; }
+        .holes-cell { text-align: right; font-weight: 700; color: #9ca3af; font-size: 0.7rem; }
+
+        .giant-header {
+            font-size: 1.1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-align: center;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .sub-header-labels {
+            display: grid;
+            grid-template-columns: 32px 1fr 48px 42px;
+            font-size: 8px;
+            font-weight: 900;
+            color: #9ca3af;
+            text-transform: uppercase;
+            padding: 4px 10px;
+        }
+
+        .school-banner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            margin-top: 12px;
+        }
+        
+        .school-logo-static { 
+            width: 56px; 
+            height: 56px; 
+            object-fit: contain; 
+            background: white; 
+            padding: 4px; 
+            border-radius: 50%; 
+            border: 2px solid var(--accent-gold);
+        }
+
+        .fav-star { font-size: 14px; margin-right: 4px; cursor: pointer; color: #d1d5db; transition: color 0.2s; }
+        .fav-star.active { color: var(--accent-gold); }
+
+        .pulse-live {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .rule-card {
+            background: white;
+            border-left: 4px solid var(--primary-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        @media (min-width: 640px) {
+            .lb-grid { grid-template-columns: 50px 1fr 70px 60px; gap: 8px; }
+            .name-text { font-size: 1.1rem; }
+            .rank-cell { font-size: 1rem; }
+            .score-cell { font-size: 1.5rem; }
+            .giant-header { font-size: 1.5rem; }
+        }
+
+        #pull-to-refresh {
+            height: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f4f6;
+            transition: height 0.2s;
+        }
+
+        .nav-scroll::-webkit-scrollbar { display: none; }
+        .nav-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-900 overflow-x-hidden">
+
+    <div id="pull-to-refresh" class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+        Release to Refresh
+    </div>
+
+    <header class="glass-header text-white shadow-xl sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 pt-3 pb-2">
+            <div class="relative flex flex-col items-center">
+                <div class="absolute left-0 top-0 flex items-center pt-2">
+                    <span class="pulse-live"></span>
+                    <span class="text-[10px] font-bold uppercase tracking-widest opacity-80">Live</span>
+                </div>
+                <div class="absolute right-0 top-0">
+                    <button onclick="refreshData()" class="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="flex flex-col items-center text-center w-full">
+                    <div class="flex items-center justify-center space-x-2">
+                        <h1 class="text-xl sm:text-3xl font-black tracking-tighter uppercase italic">Bees Golf Qualifier</h1>
+                    </div>
+                    <span class="text-[9px] sm:text-xs font-bold tracking-[0.3em] text-white/70 uppercase">Live Scoring Hub</span>
+                    
+                    <div class="school-banner">
+                        <img src="https://cmsv2-assets.apptegy.net/uploads/7672/logo/9154/bee_new.png" 
+                             alt="Box Elder Bees" 
+                             onerror="this.src='https://boxelderhigh.besd.net/wp-content/uploads/sites/2/2021/08/behs-logo.png'"
+                             class="school-logo-static shadow-md">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bg-white border-b shadow-sm">
+            <div class="nav-scroll flex items-center justify-center text-gray-500 text-[10px] sm:text-sm font-bold uppercase overflow-x-auto whitespace-nowrap px-2">
+                <button onclick="setView('leaderboard')" id="tab-leaderboard" class="px-4 py-4 active-tab transition-all">Leaderboard</button>
+                <button onclick="setView('scores')" id="tab-scores" class="px-4 py-4 transition-all">All Scores</button>
+                <button onclick="setView('input')" id="tab-input" class="px-4 py-4 transition-all">Score Entry</button>
+                <button onclick="setView('rules')" id="tab-rules" class="px-4 py-4 transition-all">Rules</button>
+            </div>
+        </nav>
+    </header>
+
+    <main id="main-content" class="max-w-5xl mx-auto p-2 sm:p-4 pb-24">
+        <div id="view-leaderboard" class="view">
+            <div class="centered-container"><div id="leaderboard-list" class="grid gap-1"></div></div>
+        </div>
+
+        <div id="view-scores" class="view hidden">
+            <div class="centered-container">
+                <div class="mb-3 px-1">
+                    <input type="text" onkeyup="filterPlayerScores(this.value)" placeholder="Search players..." class="w-full p-3 rounded-xl border border-gray-300 shadow-inner outline-none focus:ring-2 focus:ring-purple-500 text-base">
+                </div>
+                <div id="scores-list" class="grid gap-1"></div>
+            </div>
+        </div>
+
+        <div id="view-input" class="view hidden">
+            <div class="centered-container">
+                <div class="mb-4 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-xs font-black text-amber-800 uppercase tracking-tight">Warning</p>
+                            <p class="text-xs text-amber-700 font-medium mt-0.5">Do not enter scores unless you are the designated score keeper for your group.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100">
+                    <h2 class="text-lg font-black text-center mb-4 uppercase">Submit Group Scores</h2>
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <select id="groupSelect" onchange="loadGroupPlayers()" class="w-full p-3 border rounded-xl bg-gray-50 font-bold text-sm">
+                                <option value="">Group...</option>
+                                <option value="Group 1">1</option><option value="Group 2">2</option><option value="Group 3">3</option><option value="Group 4">4</option><option value="Group 5">5</option><option value="Group 6">6</option>
+                            </select>
+                            <select id="holeSelect" class="w-full p-3 border rounded-xl bg-gray-50 font-bold text-sm">
+                                <option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option>
+                            </select>
+                        </div>
+                        <div id="group-player-inputs" class="space-y-2 py-2"></div>
+                        <button id="submitBtn" onclick="submitScores()" disabled class="w-full bg-purple-700 text-white font-black py-4 rounded-xl shadow-lg disabled:opacity-30 uppercase text-sm">Submit Scores</button>
+                        <div id="statusMsg" class="text-center font-bold p-3 rounded-lg hidden text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-rules" class="view hidden">
+            <div class="centered-container px-1">
+                <div class="giant-header mt-1">Qualifier Rules</div>
+                <div class="space-y-3 mt-4 text-sm">
+                    <div class="rule-card"><strong>Ready Golf:</strong> Play ready golf at all times. Walk quickly between shots.</div>
+                    <div class="rule-card"><strong>Lost Ball:</strong> You have 3 minutes to search. If in doubt, play a provisional.</div>
+                    <div class="rule-card"><strong>Advice:</strong> Players may NOT give or receive advice from anyone, including spectators.</div>
+                    <div class="rule-card"><strong>Integrity:</strong> Be honest and accurate with all scoring. Verify your score before submitting.</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxviZ8COcQJHkjcK4iZp7XE2FBHrPozWNyGJrHBIpPDDpxHM2Nopeav_05tSvE0_TuxmA/exec";
+        let favorites = JSON.parse(localStorage.getItem('golf_favs_bees') || '[]');
+
+        function toggleFavorite(name) {
+            if (favorites.includes(name)) favorites = favorites.filter(f => f !== name);
+            else favorites.push(name);
+            localStorage.setItem('golf_favs_bees', JSON.stringify(favorites));
+            refreshData();
+        }
+
+        function createSkeleton(count) {
+            return `<div class="giant-header skeleton h-12 w-full mt-1 mb-6 rounded-xl opacity-20"></div>` + 
+                   Array(count).fill(0).map(() => `
+                <div class="bg-white p-4 rounded-xl shadow-sm lb-grid opacity-40 mb-1">
+                    <div class="skeleton h-4 w-4 rounded"></div>
+                    <div class="skeleton h-4 w-3/4 rounded ml-2"></div>
+                    <div class="skeleton h-6 w-8 rounded ml-auto"></div>
+                    <div class="skeleton h-4 w-6 rounded ml-auto"></div>
+                </div>
+            `).join('');
+        }
+
+        function setView(view) {
+            document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
+            const activeBtn = document.getElementById(`tab-${view}`);
+            if (activeBtn) activeBtn.classList.add('active-tab');
+            if (view !== 'rules' && view !== 'input') refreshData();
+        }
+
+        const createRow = (p, index) => {
+            const keys = Object.keys(p);
+            const rank = p[keys[0]] || "-";
+            const name = p[keys[1]] || "Unknown";
+            const score = p[keys[2]] || "E";
+            const holes = p[keys[3]] || "0";
+            const isUnder = String(score).startsWith('-');
+            const isFav = favorites.includes(name);
+
+            return `
+                <div class="bg-white py-2.5 px-3 rounded-xl shadow-sm border border-gray-200 lb-grid row-animate" style="animation-delay: ${index * 0.05}s">
+                    <div class="rank-cell tabular-nums">${rank}</div>
+                    <div class="name-cell">
+                        <span onclick="toggleFavorite('${name}')" class="fav-star ${isFav ? 'active' : ''}">${isFav ? '★' : '☆'}</span>
+                        <span class="name-text">${name}</span>
+                    </div>
+                    <div class="score-cell tabular-nums ${isUnder ? 'text-red-600' : 'text-gray-800'}">${score}</div>
+                    <div class="holes-cell tabular-nums">${holes}</div>
+                </div>
+            `;
+        };
+
+        async function fetchLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = createSkeleton(10);
+            try {
+                const res = await fetch(`${DEPLOY_URL}?action=getLeaderboard`);
+                const data = await res.json();
+                
+                let results = data.filter((p, index) => {
+                    const keys = Object.keys(p);
+                    const nameVal = String(p[keys[1]] || "").trim().toUpperCase();
+                    if (nameVal === "PLAYER" || nameVal === "" || nameVal.includes("TEAM") || nameVal.includes("LEADERS")) return false;
+                    return true;
+                });
+
+                const sortedResults = [...results].sort((a, b) => {
+                    const nameA = a[Object.keys(a)[1]];
+                    const nameB = b[Object.keys(b)[1]];
+                    return (favorites.includes(nameB) ? 1 : 0) - (favorites.includes(nameA) ? 1 : 0);
+                });
+
+                let html = `<div class="giant-header mt-1">Qualifier Leaderboard</div>
+                            <div class="sub-header-labels"><div>RK</div><div class="text-center">PLAYER</div><div class="text-center">SC</div><div class="text-right">THRU</div></div>`;
+                list.innerHTML = html + sortedResults.map((p, i) => createRow(p, i)).join('');
+            } catch (e) { list.innerHTML = `<div class="p-10 text-center text-red-500 font-bold">Connection Error.</div>`; }
+        }
+
+        async function fetchPlayerScores() {
+            const list = document.getElementById('scores-list');
+            list.innerHTML = createSkeleton(8);
+            try {
+                const res = await fetch(`${DEPLOY_URL}?action=getAllScores`);
+                const data = await res.json();
+                
+                // Column B = Index 1 (Player Name)
+                // Column X = Index 23 (Thru)
+                // Column Y = Index 24 (Total Score)
+                // First player starts row 4 (Data starts at index 3 in zero-indexed array if headers are 3 rows)
+                
+                const players = data.slice(3).filter(p => {
+                   const vals = Object.values(p);
+                   const name = String(vals[1] || "").trim(); // Column B
+                   return name && name !== "Player Name" && name !== "Name" && name !== "0" && name !== "PLAYER";
+                });
+
+                if (players.length === 0) {
+                    list.innerHTML = `<div class="p-10 text-center text-gray-500 font-bold">No scores reported yet.</div>`;
+                    return;
+                }
+
+                list.innerHTML = `<div class="sub-header-labels grid-cols-3 !grid" style="grid-template-columns: 1fr 55px 45px"><div>PLAYER</div><div class="text-center">SC</div><div class="text-right">THRU</div></div>` + 
+                players.map((p, i) => {
+                    const keys = Object.keys(p);
+                    const name = p[keys[1]] || "Unknown"; 
+                    const thru = p[keys[23]] || "0"; 
+                    const score = p[keys[24]] || "E";
+                    const isUnder = String(score).startsWith('-');
+                    
+                    return `
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between row-animate" style="animation-delay: ${i*0.02}s">
+                            <span class="font-bold text-gray-800 uppercase flex items-center overflow-hidden flex-1">
+                                <span class="truncate text-[0.85rem]">${name}</span>
+                            </span>
+                            <span class="w-14 text-center tabular-nums text-lg font-black ${isUnder ? 'text-red-600' : 'text-purple-800'}">${score}</span>
+                            <span class="w-10 text-right tabular-nums text-xs font-bold text-gray-400">${thru}</span>
+                        </div>`;
+                }).join('');
+            } catch (e) { 
+                console.error(e);
+                list.innerHTML = `<div class="p-10 text-center text-red-500">Error loading scores.</div>`; 
+            }
+        }
+
+        async function loadGroupPlayers() {
+            const groupVal = document.getElementById('groupSelect').value;
+            const container = document.getElementById('group-player-inputs');
+            if (!groupVal) return container.innerHTML = "";
+            const groupTab = groupVal.replace("Group ", "G");
+            container.innerHTML = `<div class="flex justify-center py-4"><div class="skeleton h-8 w-full rounded-xl opacity-20"></div></div>`;
+            try {
+                const res = await fetch(`${DEPLOY_URL}?action=getGroupPlayers&groupTab=${encodeURIComponent(groupTab)}`);
+                const players = await res.json();
+                container.innerHTML = players.filter(n => n && n !== "Name" && n !== "Hole").map(name => `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
+                        <span class="font-bold text-gray-700 text-[0.8rem] uppercase truncate mr-2">${name}</span>
+                        <input type="number" inputmode="numeric" data-player="${name}" placeholder="Par" class="player-score-input w-16 p-2 border-2 rounded-lg text-center font-bold text-xl outline-none focus:border-purple-500">
+                    </div>
+                `).join('');
+                document.getElementById('submitBtn').disabled = false;
+            } catch (e) { container.innerHTML = `<div class="text-red-500 text-center">Error loading players.</div>`; }
+        }
+
+        async function submitScores() {
+            const groupVal = document.getElementById('groupSelect').value;
+            const groupTab = groupVal.replace("Group ", "G");
+            const hole = document.getElementById('holeSelect').value;
+            const btn = document.getElementById('submitBtn');
+            const scores = {};
+            let hasScores = false;
+            document.querySelectorAll('.player-score-input').forEach(i => { 
+                if(i.value) { scores[i.getAttribute('data-player')] = i.value; hasScores = true; }
+            });
+            if (!hasScores) return showStatus("Enter a score.", false);
+            btn.disabled = true; btn.innerText = "SUBMITTING...";
+            try {
+                const response = await fetch(DEPLOY_URL, { method: 'POST', body: JSON.stringify({ groupTab, holeNum: hole, scores }) });
+                const result = await response.json();
+                if (result.result === "success") {
+                    showStatus(`✓ Hole ${hole} updated!`, true);
+                    document.querySelectorAll('.player-score-input').forEach(i => i.value = '');
+                } else showStatus("Submission failed.", false);
+            } catch (e) { showStatus("Network error.", false); }
+            finally { btn.disabled = false; btn.innerText = "SUBMIT SCORES"; }
+        }
+
+        function showStatus(msg, success) {
+            const s = document.getElementById('statusMsg');
+            s.innerText = msg; s.className = `text-center p-3 rounded-lg block font-bold mt-3 ${success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            s.classList.remove('hidden'); setTimeout(() => s.classList.add('hidden'), 5000);
+        }
+
+        function filterPlayerScores(q) {
+            const items = document.querySelectorAll('#scores-list .row-animate');
+            const searchTerm = q.toLowerCase();
+            items.forEach(i => i.style.display = i.innerText.toLowerCase().includes(searchTerm) ? '' : 'none');
+        }
+
+        function refreshData() {
+            const active = document.querySelector('nav button.active-tab')?.id;
+            if (active === 'tab-leaderboard') fetchLeaderboard();
+            if (active === 'tab-scores') fetchPlayerScores();
+        }
+
+        let startY = 0;
+        document.addEventListener('touchstart', e => { startY = e.touches[0].pageY; }, {passive: true});
+        document.addEventListener('touchmove', e => {
+            const y = e.touches[0].pageY;
+            if (window.scrollY === 0 && y > startY) {
+                const diff = Math.min((y - startY) / 2, 60);
+                const ptr = document.getElementById('pull-to-refresh');
+                if(ptr) ptr.style.height = diff + 'px';
+            }
+        }, {passive: true});
+        document.addEventListener('touchend', e => {
+            const ptr = document.getElementById('pull-to-refresh');
+            if (ptr && parseInt(ptr.style.height) > 50) refreshData();
+            if (ptr) ptr.style.height = '0px';
+        });
+
+        window.onload = () => fetchLeaderboard();
+    </script>
+</body>
+</html>
