@@ -175,7 +175,7 @@
                 <div class="absolute right-0 top-0">
                     <button onclick="refreshData()" class="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all active:scale-95">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357-2H15" />
                         </svg>
                     </button>
                 </div>
@@ -222,7 +222,45 @@
 
         <div id="view-input" class="view hidden">
             <div class="centered-container">
-                <div class="mb-4 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm">
+                <!-- Group/Hole Selection first -->
+                <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100 mb-4">
+                    <h2 class="text-lg font-black text-center mb-4 uppercase italic">Setup Your Group</h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <select id="groupSelect" onchange="loadGroupPlayers()" class="w-full p-3 border rounded-xl bg-gray-50 font-bold text-sm">
+                            <option value="">Group...</option>
+                            <option value="Group 1">1</option><option value="Group 2">2</option><option value="Group 3">3</option><option value="Group 4">4</option><option value="Group 5">5</option><option value="Group 6">6</option>
+                        </select>
+                        <select id="holeSelect" onchange="fetchCurrentHoleScores()" class="w-full p-3 border rounded-xl bg-gray-50 font-bold text-sm">
+                            <option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Reference box moved ABOVE inputs -->
+                <div id="current-scores-reference" class="bg-purple-950 p-5 rounded-2xl shadow-lg border border-purple-800 text-white mb-4 hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse mr-2"></div>
+                            <h3 class="text-xs font-black uppercase tracking-widest text-purple-200">Current Recorded Scores</h3>
+                        </div>
+                        <span id="ref-hole-label" class="text-[10px] font-bold bg-purple-600 px-2 py-1 rounded">HOLE 1</span>
+                    </div>
+                    <div id="reference-list" class="space-y-3">
+                        <!-- Data populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Actual input area -->
+                <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100 mb-4">
+                    <h2 class="text-lg font-black text-center mb-4 uppercase italic">Score Entry</h2>
+                    <div id="group-player-inputs" class="space-y-2 py-2">
+                        <div class="text-center py-6 text-gray-400 font-medium text-sm">Select a group to start entering scores</div>
+                    </div>
+                    <button id="submitBtn" onclick="submitScores()" disabled class="w-full bg-purple-700 text-white font-black py-4 rounded-xl shadow-lg disabled:opacity-30 uppercase text-sm mt-4">Submit Scores</button>
+                    <div id="statusMsg" class="text-center font-bold p-3 rounded-lg hidden text-sm"></div>
+                </div>
+
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm mb-4">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
@@ -231,26 +269,8 @@
                         </div>
                         <div class="ml-3">
                             <p class="text-xs font-black text-amber-800 uppercase tracking-tight">Warning</p>
-                            <p class="text-xs text-amber-700 font-medium mt-0.5">Do not enter scores unless you are the designated score keeper for your group.</p>
+                            <p class="text-xs text-amber-700 font-medium mt-0.5">Check the "Current Recorded Scores" box above before submitting to ensure you aren't overwriting correct data.</p>
                         </div>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100">
-                    <h2 class="text-lg font-black text-center mb-4 uppercase">Submit Group Scores</h2>
-                    <div class="space-y-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <select id="groupSelect" onchange="loadGroupPlayers()" class="w-full p-3 border rounded-xl bg-gray-50 font-bold text-sm">
-                                <option value="">Group...</option>
-                                <option value="Group 1">1</option><option value="Group 2">2</option><option value="Group 3">3</option><option value="Group 4">4</option><option value="Group 5">5</option><option value="Group 6">6</option>
-                            </select>
-                            <select id="holeSelect" class="w-full p-3 border rounded-xl bg-gray-50 font-bold text-sm">
-                                <option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option>
-                            </select>
-                        </div>
-                        <div id="group-player-inputs" class="space-y-2 py-2"></div>
-                        <button id="submitBtn" onclick="submitScores()" disabled class="w-full bg-purple-700 text-white font-black py-4 rounded-xl shadow-lg disabled:opacity-30 uppercase text-sm">Submit Scores</button>
-                        <div id="statusMsg" class="text-center font-bold p-3 rounded-lg hidden text-sm"></div>
                     </div>
                 </div>
             </div>
@@ -272,6 +292,9 @@
     <script>
         const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxviZ8COcQJHkjcK4iZp7XE2FBHrPozWNyGJrHBIpPDDpxHM2Nopeav_05tSvE0_TuxmA/exec";
         let favorites = JSON.parse(localStorage.getItem('golf_favs_bees') || '[]');
+        let currentGroupPlayers = []; 
+        let cachedAllScores = null;
+        let lastCacheTime = 0;
 
         function toggleFavorite(name) {
             if (favorites.includes(name)) favorites = favorites.filter(f => f !== name);
@@ -355,15 +378,12 @@
             try {
                 const res = await fetch(`${DEPLOY_URL}?action=getAllScores`);
                 const data = await res.json();
-                
-                // Column B = Index 1 (Player Name)
-                // Column X = Index 23 (Thru)
-                // Column Y = Index 24 (Total Score)
-                // First player starts row 4 (Data starts at index 3 in zero-indexed array if headers are 3 rows)
+                cachedAllScores = data;
+                lastCacheTime = Date.now();
                 
                 const players = data.slice(3).filter(p => {
                    const vals = Object.values(p);
-                   const name = String(vals[1] || "").trim(); // Column B
+                   const name = String(vals[1] || "").trim();
                    return name && name !== "Player Name" && name !== "Name" && name !== "0" && name !== "PLAYER";
                 });
 
@@ -398,20 +418,97 @@
         async function loadGroupPlayers() {
             const groupVal = document.getElementById('groupSelect').value;
             const container = document.getElementById('group-player-inputs');
-            if (!groupVal) return container.innerHTML = "";
+            if (!groupVal) {
+                currentGroupPlayers = [];
+                container.innerHTML = `<div class="text-center py-6 text-gray-400 font-medium text-sm">Select a group to start entering scores</div>`;
+                document.getElementById('current-scores-reference').classList.add('hidden');
+                return;
+            }
             const groupTab = groupVal.replace("Group ", "G");
             container.innerHTML = `<div class="flex justify-center py-4"><div class="skeleton h-8 w-full rounded-xl opacity-20"></div></div>`;
             try {
                 const res = await fetch(`${DEPLOY_URL}?action=getGroupPlayers&groupTab=${encodeURIComponent(groupTab)}`);
                 const players = await res.json();
-                container.innerHTML = players.filter(n => n && n !== "Name" && n !== "Hole").map(name => `
+                currentGroupPlayers = players.filter(n => n && n !== "Name" && n !== "Hole");
+                
+                container.innerHTML = currentGroupPlayers.map(name => `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
                         <span class="font-bold text-gray-700 text-[0.8rem] uppercase truncate mr-2">${name}</span>
                         <input type="number" inputmode="numeric" data-player="${name}" placeholder="Par" class="player-score-input w-16 p-2 border-2 rounded-lg text-center font-bold text-xl outline-none focus:border-purple-500">
                     </div>
                 `).join('');
                 document.getElementById('submitBtn').disabled = false;
+                
+                fetchCurrentHoleScores(true); // Force refresh
             } catch (e) { container.innerHTML = `<div class="text-red-500 text-center">Error loading players.</div>`; }
+        }
+
+        async function fetchCurrentHoleScores(force = false) {
+            const groupVal = document.getElementById('groupSelect').value;
+            const hole = document.getElementById('holeSelect').value;
+            const refBox = document.getElementById('current-scores-reference');
+            const refList = document.getElementById('reference-list');
+            const refHoleLabel = document.getElementById('ref-hole-label');
+
+            if (!groupVal || currentGroupPlayers.length === 0) {
+                refBox.classList.add('hidden');
+                return;
+            }
+
+            refBox.classList.remove('hidden');
+            refHoleLabel.innerText = `HOLE ${hole}`;
+
+            try {
+                let data = cachedAllScores;
+                if (force || !data || (Date.now() - lastCacheTime > 30000)) {
+                    const res = await fetch(`${DEPLOY_URL}?action=getAllScores`);
+                    data = await res.json();
+                    cachedAllScores = data;
+                    lastCacheTime = Date.now();
+                }
+                
+                const groupData = currentGroupPlayers.map(playerName => {
+                    const foundRow = data.find(row => {
+                        const rowName = String(row[Object.keys(row)[1]] || "").trim().toUpperCase();
+                        return rowName === playerName.trim().toUpperCase();
+                    });
+                    
+                    let score = null;
+                    if (foundRow) {
+                        const keys = Object.keys(foundRow);
+                        const holeNum = parseInt(hole);
+                        
+                        const headerKey = keys.find(k => k === hole || k === `Hole ${hole}` || k === String(holeNum));
+                        if (headerKey) score = foundRow[headerKey];
+                        
+                        if (score === null || score === undefined || score === "") {
+                           const posKey = keys[holeNum + 1];
+                           if (posKey) score = foundRow[posKey];
+                        }
+                    }
+                    
+                    const hasScore = (score !== null && score !== undefined && String(score).trim() !== "" && String(score).trim() !== "0");
+                    
+                    return {
+                        name: playerName,
+                        score: hasScore ? score : "NOT ENTERED",
+                        isValid: hasScore
+                    };
+                });
+
+                refList.innerHTML = groupData.map(p => `
+                    <div class="flex items-center justify-between border-b border-purple-800/50 pb-2 last:border-0 last:pb-0">
+                        <span class="text-xs font-bold text-purple-200 uppercase truncate pr-4">${p.name}</span>
+                        <span class="text-sm font-black tabular-nums ${p.isValid ? 'text-green-400' : 'text-purple-400 italic text-[10px]'}">
+                            ${p.score}
+                        </span>
+                    </div>
+                `).join('');
+
+            } catch (e) {
+                console.error("Ref error:", e);
+                refList.innerHTML = `<div class="text-xs text-red-400 text-center">Ref error. Tap refresh.</div>`;
+            }
         }
 
         async function submitScores() {
@@ -432,6 +529,7 @@
                 if (result.result === "success") {
                     showStatus(`✓ Hole ${hole} updated!`, true);
                     document.querySelectorAll('.player-score-input').forEach(i => i.value = '');
+                    await fetchCurrentHoleScores(true); 
                 } else showStatus("Submission failed.", false);
             } catch (e) { showStatus("Network error.", false); }
             finally { btn.disabled = false; btn.innerText = "SUBMIT SCORES"; }
@@ -453,6 +551,7 @@
             const active = document.querySelector('nav button.active-tab')?.id;
             if (active === 'tab-leaderboard') fetchLeaderboard();
             if (active === 'tab-scores') fetchPlayerScores();
+            if (active === 'tab-input') fetchCurrentHoleScores(true);
         }
 
         let startY = 0;
