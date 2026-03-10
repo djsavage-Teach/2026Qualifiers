@@ -162,14 +162,58 @@
         .scorecard-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
+            gap: 12px;
         }
         .hole-box {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            border: 1px solid #f3f4f6;
             border-radius: 12px;
-            padding: 8px;
+            padding: 10px 4px;
             text-align: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Scoring Shapes */
+        .score-circle {
+            border: 2px solid #ef4444;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .score-square {
+            border: 2px solid #374151;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .score-double-square {
+            border: 2px solid #374151;
+            padding: 2px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .inner-square {
+            border: 1px solid #374151;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
         }
 
         @media (min-width: 640px) {
@@ -199,13 +243,13 @@
     <!-- Scorecard Modal -->
     <div id="scorecard-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content shadow-2xl animate-fadeInUp" onclick="event.stopPropagation()">
-            <div class="sticky top-0 bg-white p-6 border-b flex justify-between items-center">
+            <div class="sticky top-0 bg-white p-6 border-b flex justify-between items-center z-10">
                 <div>
-                    <h3 id="modal-player-name" class="text-xl font-black uppercase italic text-purple-900">Player Name</h3>
-                    <p class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Full Scorecard</p>
+                    <h3 id="modal-player-name" class="text-xl font-black uppercase italic text-purple-900 leading-tight">Player Name</h3>
+                    <p class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Live Course Stats</p>
                 </div>
-                <button onclick="closeModal()" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <button onclick="closeModal()" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -218,8 +262,8 @@
                         <p id="modal-out-score" class="text-xl font-black text-purple-900">-</p>
                     </div>
                     <div class="bg-purple-50 p-3 rounded-xl text-center border border-purple-100">
-                        <p class="text-[9px] font-black text-purple-400 uppercase">In</p>
-                        <p id="modal-in-score" class="text-xl font-black text-purple-900">-</p>
+                        <p id="modal-rel-label" class="text-[9px] font-black text-purple-400 uppercase">Rel</p>
+                        <p id="modal-rel-score" class="text-xl font-black text-purple-900">E</p>
                     </div>
                     <div class="bg-purple-700 p-3 rounded-xl text-center border border-purple-800 shadow-md">
                         <p class="text-[9px] font-black text-purple-200 uppercase">Total</p>
@@ -229,6 +273,13 @@
 
                 <div id="modal-score-grid" class="scorecard-grid">
                     <!-- Holes 1-18 generated here -->
+                </div>
+                <div class="mt-8 text-center">
+                    <div class="inline-flex space-x-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        <div class="flex items-center"><span class="w-2 h-2 rounded-full border border-red-500 mr-1"></span> Birdie</div>
+                        <div class="flex items-center"><span class="w-2 h-2 border border-gray-700 mr-1"></span> Bogey</div>
+                        <div class="flex items-center"><span class="w-2 h-2 border-double border-2 border-gray-700 mr-1"></span> 2+ Over</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -350,9 +401,6 @@
         let cachedAllScores = null;
         let lastCacheTime = 0;
 
-        /**
-         * Helper to format score with +/- prefix
-         */
         function formatRelationToPar(scoreStr) {
             const s = String(scoreStr || "").trim().toUpperCase();
             if (s === "E" || s === "" || s === "0") return "E";
@@ -361,10 +409,50 @@
             return s;
         }
 
+        /**
+         * Correctly parses the course pars from the "All Scores" sheet data.
+         * Now searches for the row where the Name column contains "PAR".
+         */
+        function getCoursePars(data) {
+            const defaultPars = Array(18).fill(4);
+            if (!data || data.length === 0) return defaultPars;
+            
+            // Look specifically for the "PAR" row
+            const parRow = data.find(row => {
+                const vals = Object.values(row);
+                return String(vals[1] || "").trim().toUpperCase() === "PAR";
+            });
+
+            if (!parRow) return defaultPars;
+            
+            const values = Object.values(parRow); 
+            const pars = [];
+            
+            // Map Columns for Pars (Same mapping as player scores):
+            // Hole 1: Index 2 -> Hole 9: Index 10
+            // Index 11 is OUT Total (Skip)
+            // Hole 10: Index 12 -> Hole 18: Index 20
+            
+            try {
+                for (let i = 2; i <= 10; i++) {
+                    const val = parseInt(values[i]);
+                    pars.push(isNaN(val) ? 4 : val);
+                }
+                for (let i = 12; i <= 20; i++) {
+                    const val = parseInt(values[i]);
+                    pars.push(isNaN(val) ? 4 : val);
+                }
+                return pars;
+            } catch (e) {
+                return defaultPars;
+            }
+        }
+
         function openScorecard(playerName) {
             if (!cachedAllScores) return;
             const player = cachedAllScores.find(p => {
                 const vals = Object.values(p);
+                // Name is in Column B (Index 1)
                 return String(vals[1] || "").trim().toUpperCase() === playerName.trim().toUpperCase();
             });
 
@@ -377,46 +465,62 @@
             nameEl.innerText = playerName;
             modal.style.display = 'flex';
 
-            const keys = Object.keys(player);
+            const playerValues = Object.values(player);
+            const coursePars = getCoursePars(cachedAllScores);
+            
             let outTotal = 0;
             let inTotal = 0;
+            let relToPar = 0;
             let gridHtml = '';
 
             for (let i = 1; i <= 18; i++) {
-                /**
-                 * SHEET MAPPING LOGIC:
-                 * Index 1: Name
-                 * Index 2-10: Holes 1-9
-                 * Index 11: OUT Total (Skip this column in visualization)
-                 * Index 12-20: Holes 10-18
-                 */
+                const par = coursePars[i-1];
                 let colIdx;
+                
+                // Column Indices (Skipping B index 1 and L index 11):
+                // Holes 1-9: Indices 2, 3, 4, 5, 6, 7, 8, 9, 10
+                // Holes 10-18: Indices 12, 13, 14, 15, 16, 17, 18, 19, 20
                 if (i <= 9) {
-                    colIdx = i + 1; // 1->2, 2->3... 9->10
+                    colIdx = i + 1; 
                 } else {
-                    colIdx = i + 2; // 10->12, 11->13... 18->20
+                    colIdx = i + 2; 
                 }
 
-                const score = player[keys[colIdx]] || "";
+                const score = playerValues[colIdx] || "";
                 const numScore = parseInt(score);
+                let scoreMarkup = score || '-';
                 
                 if (!isNaN(numScore) && numScore > 0) {
                     if (i <= 9) outTotal += numScore;
                     else inTotal += numScore;
+                    relToPar += (numScore - par);
+
+                    if (numScore < par) {
+                        scoreMarkup = `<div class="score-circle text-red-500 font-black">${numScore}</div>`;
+                    } else if (numScore === par + 1) {
+                        scoreMarkup = `<div class="score-square text-gray-800 font-black">${numScore}</div>`;
+                    } else if (numScore > par + 1) {
+                        scoreMarkup = `<div class="score-double-square"><div class="inner-square text-gray-800 font-black">${numScore}</div></div>`;
+                    } else {
+                        scoreMarkup = `<span class="text-gray-800 font-black text-lg">${numScore}</span>`;
+                    }
                 }
 
                 gridHtml += `
-                    <div class="hole-box">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Hole ${i}</p>
-                        <p class="text-lg font-black text-purple-800">${score || '-'}</p>
+                    <div class="hole-box shadow-sm">
+                        <div class="absolute top-1 left-1.5 text-[7px] font-black text-gray-300">H${i}</div>
+                        <div class="text-[7px] font-black text-purple-300 uppercase mb-1">PAR ${par}</div>
+                        <div class="h-10 flex items-center justify-center">
+                            ${scoreMarkup}
+                        </div>
                     </div>
                 `;
             }
 
             gridEl.innerHTML = gridHtml;
             document.getElementById('modal-out-score').innerText = outTotal || '-';
-            document.getElementById('modal-in-score').innerText = inTotal || '-';
             document.getElementById('modal-total-score').innerText = (outTotal + inTotal) || '-';
+            document.getElementById('modal-rel-score').innerText = formatRelationToPar(relToPar);
             document.body.style.overflow = 'hidden';
         }
 
@@ -499,7 +603,6 @@
                             <div class="sub-header-labels"><div>RK</div><div class="text-center">PLAYER</div><div class="text-center">SC</div><div class="text-right">THRU</div></div>`;
                 list.innerHTML = html + sortedResults.map((p, i) => createRow(p, i)).join('');
                 
-                // Refresh full score cache
                 const res2 = await fetch(`${DEPLOY_URL}?action=getAllScores`);
                 cachedAllScores = await res2.json();
                 lastCacheTime = Date.now();
@@ -515,10 +618,11 @@
                 cachedAllScores = data;
                 lastCacheTime = Date.now();
                 
-                const players = data.slice(3).filter(p => {
+                // Filter out headers and the PAR row
+                const players = data.filter(p => {
                    const vals = Object.values(p);
-                   const name = String(vals[1] || "").trim();
-                   return name && name !== "Player Name" && name !== "Name" && name !== "0" && name !== "PLAYER";
+                   const name = String(vals[1] || "").trim().toUpperCase();
+                   return name && name !== "PLAYER NAME" && name !== "NAME" && name !== "0" && name !== "PLAYER" && name !== "PAR";
                 });
 
                 if (players.length === 0) {
@@ -528,10 +632,10 @@
 
                 list.innerHTML = `<div class="sub-header-labels grid-cols-3 !grid" style="grid-template-columns: 1fr 55px 45px"><div>PLAYER</div><div class="text-center">SC</div><div class="text-right">THRU</div></div>` + 
                 players.map((p, i) => {
-                    const keys = Object.keys(p);
-                    const name = p[keys[1]] || "Unknown"; 
-                    const thru = p[keys[23]] || "0"; 
-                    const score = formatRelationToPar(p[keys[24]] || "E");
+                    const vals = Object.values(p);
+                    const name = vals[1] || "Unknown"; 
+                    const thru = vals[23] || "0"; 
+                    const score = formatRelationToPar(vals[24] || "E");
                     const isUnder = String(score).startsWith('-');
                     
                     return `
@@ -567,7 +671,7 @@
                 container.innerHTML = currentGroupPlayers.map(name => `
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
                         <span class="font-bold text-gray-700 text-[0.8rem] uppercase truncate mr-2">${name}</span>
-                        <input type="number" inputmode="numeric" data-player="${name}" placeholder="Par" class="player-score-input w-16 p-2 border-2 rounded-lg text-center font-bold text-xl outline-none focus:border-purple-500">
+                        <input type="number" inputmode="numeric" data-player="${name}" placeholder="Score" class="player-score-input w-16 p-2 border-2 rounded-lg text-center font-bold text-xl outline-none focus:border-purple-500">
                     </div>
                 `).join('');
                 document.getElementById('submitBtn').disabled = false;
@@ -602,17 +706,16 @@
                 
                 const groupData = currentGroupPlayers.map(playerName => {
                     const foundRow = data.find(row => {
-                        const rowName = String(row[Object.keys(row)[1]] || "").trim().toUpperCase();
+                        const rowName = String(Object.values(row)[1] || "").trim().toUpperCase();
                         return rowName === playerName.trim().toUpperCase();
                     });
                     
                     let score = null;
                     if (foundRow) {
-                        const keys = Object.keys(foundRow);
+                        const vals = Object.values(foundRow);
                         const holeNum = parseInt(hole);
-                        // Map Hole 10+ differently because of total column skip
-                        const colIdx = holeNum <= 9 ? (holeNum + 1) : (holeNum + 2);
-                        score = foundRow[keys[colIdx]];
+                        const colIdx = holeNum <= 9 ? holeNum + 1 : holeNum + 2;
+                        score = vals[colIdx];
                     }
                     const hasScore = (score !== null && score !== undefined && String(score).trim() !== "" && String(score).trim() !== "0");
                     return { name: playerName, score: hasScore ? score : "NOT ENTERED", isValid: hasScore };
