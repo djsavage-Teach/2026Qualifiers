@@ -52,6 +52,7 @@
 
         .centered-container { max-width: 600px; margin: 0 auto; }
 
+        /* Leaderboard Grid */
         .lb-grid {
             display: grid;
             grid-template-columns: 32px 1fr 48px 42px;
@@ -127,15 +128,87 @@
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        .rule-card {
+        /* Scorecard Entry Styles */
+        .scorecard-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             background: white;
-            border-left: 4px solid var(--primary-color);
-            padding: 12px 16px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            line-height: 1.4;
+            border: 1px solid #e5e7eb;
+        }
+
+        .sc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            min-width: 800px;
+        }
+
+        .sc-table th, .sc-table td {
+            border: 1px solid #f3f4f6;
+            text-align: center;
+            padding: 8px 4px;
+        }
+
+        .sc-table th {
+            background: #f9fafb;
+            color: #6b7280;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+
+        .sc-name-col {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 10;
+            text-align: left !important;
+            padding-left: 12px !important;
+            font-weight: 900;
+            text-transform: uppercase;
+            width: 120px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+        }
+
+        .sc-input {
+            width: 32px;
+            height: 32px;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: #f3f4f6;
+            appearance: none;
+            -moz-appearance: textfield;
+        }
+
+        .sc-input:focus {
+            background: white;
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(76, 29, 149, 0.1);
+        }
+
+        .sc-input.updating {
+            animation: pulse-border 1s infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes pulse-border {
+            0% { border-color: transparent; }
+            50% { border-color: var(--accent-gold); }
+            100% { border-color: transparent; }
+        }
+
+        .sc-total-col {
+            background: #f5f3ff !important;
+            font-weight: 900;
+            color: var(--primary-color);
+            width: 40px;
         }
 
         /* Modal Styles */
@@ -159,62 +232,6 @@
             overflow-y: auto;
             position: relative;
         }
-        .scorecard-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-        .hole-box {
-            background: #ffffff;
-            border: 1px solid #f3f4f6;
-            border-radius: 12px;
-            padding: 10px 4px;
-            text-align: center;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Scoring Shapes */
-        .score-circle {
-            border: 2px solid #ef4444;
-            border-radius: 50%;
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-        .score-square {
-            border: 2px solid #374151;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-        .score-double-square {
-            border: 2px solid #374151;
-            padding: 2px;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .inner-square {
-            border: 1px solid #374151;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
 
         @media (min-width: 640px) {
             .lb-grid { grid-template-columns: 50px 1fr 70px 60px; gap: 8px; }
@@ -224,69 +241,26 @@
             .giant-header { font-size: 1.5rem; }
         }
 
-        #pull-to-refresh {
-            height: 0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f3f4f6;
-            transition: height 0.2s;
-        }
-
         .nav-scroll::-webkit-scrollbar { display: none; }
         .nav-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-900 overflow-x-hidden">
+<body class="bg-gray-50 min-h-screen text-gray-900 overflow-x-hidden">
 
-    <!-- Scorecard Modal -->
-    <div id="scorecard-modal" class="modal-overlay" onclick="closeModal(event)">
-        <div class="modal-content shadow-2xl animate-fadeInUp" onclick="event.stopPropagation()">
+    <!-- Scorecard Modal (Viewing only) -->
+    <div id="scorecard-modal" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content shadow-2xl" onclick="event.stopPropagation()">
             <div class="sticky top-0 bg-white p-6 border-b flex justify-between items-center z-10">
                 <div>
                     <h3 id="modal-player-name" class="text-xl font-black uppercase italic text-purple-900 leading-tight">Player Name</h3>
                     <p class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Live Course Stats</p>
                 </div>
-                <button onclick="closeModal()" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                <button onclick="closeModal()" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition-colors">✕</button>
             </div>
-            <div class="p-6">
-                <!-- Totals Row -->
-                <div class="grid grid-cols-3 gap-3 mb-6">
-                    <div class="bg-purple-50 p-3 rounded-xl text-center border border-purple-100">
-                        <p class="text-[9px] font-black text-purple-400 uppercase">Out</p>
-                        <p id="modal-out-score" class="text-xl font-black text-purple-900">-</p>
-                    </div>
-                    <div class="bg-purple-50 p-3 rounded-xl text-center border border-purple-100">
-                        <p id="modal-rel-label" class="text-[9px] font-black text-purple-400 uppercase">Rel</p>
-                        <p id="modal-rel-score" class="text-xl font-black text-purple-900">E</p>
-                    </div>
-                    <div class="bg-purple-700 p-3 rounded-xl text-center border border-purple-800 shadow-md">
-                        <p class="text-[9px] font-black text-purple-200 uppercase">Total</p>
-                        <p id="modal-total-score" class="text-xl font-black text-white">-</p>
-                    </div>
-                </div>
-
-                <div id="modal-score-grid" class="scorecard-grid">
-                    <!-- Holes 1-18 generated here -->
-                </div>
-                <div class="mt-8 text-center">
-                    <div class="inline-flex space-x-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                        <div class="flex items-center"><span class="w-2 h-2 rounded-full border border-red-500 mr-1"></span> Birdie</div>
-                        <div class="flex items-center"><span class="w-2 h-2 border border-gray-700 mr-1"></span> Bogey</div>
-                        <div class="flex items-center"><span class="w-2 h-2 border-double border-2 border-gray-700 mr-1"></span> 2+ Over</div>
-                    </div>
-                </div>
+            <div id="modal-content-body" class="p-6">
+                <!-- Scorecard grid injected here -->
             </div>
         </div>
-    </div>
-
-    <div id="pull-to-refresh" class="text-xs font-bold text-gray-400 uppercase tracking-widest">
-        Release to Refresh
     </div>
 
     <header class="glass-header text-white shadow-xl sticky top-0 z-50">
@@ -303,23 +277,15 @@
                         </svg>
                     </button>
                 </div>
-                
                 <div class="flex flex-col items-center text-center w-full">
-                    <div class="flex items-center justify-center space-x-2">
-                        <h1 class="text-xl sm:text-3xl font-black tracking-tighter uppercase italic">Bees Golf Qualifier</h1>
-                    </div>
+                    <h1 class="text-xl sm:text-3xl font-black tracking-tighter uppercase italic">Bees Golf Qualifier</h1>
                     <span class="text-[9px] sm:text-xs font-bold tracking-[0.3em] text-white/70 uppercase">Live Scoring Hub</span>
-                    
                     <div class="school-banner">
-                        <img src="https://cmsv2-assets.apptegy.net/uploads/7672/logo/9154/bee_new.png" 
-                             alt="Box Elder Bees" 
-                             onerror="this.src='https://boxelderhigh.besd.net/wp-content/uploads/sites/2/2021/08/behs-logo.png'"
-                             class="school-logo-static shadow-md">
+                        <img src="https://cmsv2-assets.apptegy.net/uploads/7672/logo/9154/bee_new.png" alt="Box Elder Bees" class="school-logo-static shadow-md">
                     </div>
                 </div>
             </div>
         </div>
-
         <nav class="bg-white border-b shadow-sm">
             <div class="nav-scroll flex items-center justify-center text-gray-500 text-[10px] sm:text-sm font-bold uppercase overflow-x-auto whitespace-nowrap px-2">
                 <button onclick="setView('leaderboard')" id="tab-leaderboard" class="px-4 py-4 active-tab transition-all">Leaderboard</button>
@@ -330,57 +296,70 @@
         </nav>
     </header>
 
-    <main id="main-content" class="max-w-5xl mx-auto p-2 sm:p-4 pb-24">
+    <main id="main-content" class="max-w-7xl mx-auto p-2 sm:p-4 pb-24">
+        
+        <!-- View: Leaderboard -->
         <div id="view-leaderboard" class="view">
             <div class="centered-container"><div id="leaderboard-list" class="grid gap-1"></div></div>
         </div>
 
+        <!-- View: All Scores -->
         <div id="view-scores" class="view hidden">
             <div class="centered-container">
-                <div class="mb-3 px-1">
-                    <input type="text" onkeyup="filterPlayerScores(this.value)" placeholder="Search players..." class="w-full p-3 rounded-xl border border-gray-300 shadow-inner outline-none focus:ring-2 focus:ring-purple-500 text-base">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <input type="text" onkeyup="filterPlayerScores(this.value)" placeholder="Search players..." class="w-full p-3 rounded-xl border border-gray-300 shadow-inner outline-none focus:ring-2 focus:ring-purple-500 text-sm">
                 </div>
                 <div id="scores-list" class="grid gap-1"></div>
             </div>
         </div>
 
+        <!-- View: Score Entry (Overhauled) -->
         <div id="view-input" class="view hidden">
-            <div class="centered-container">
-                <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100 mb-4">
-                    <h2 class="text-lg font-black text-center mb-4 uppercase italic">Setup Your Group</h2>
-                    <div class="grid grid-cols-2 gap-3">
-                        <select id="groupSelect" onchange="loadGroupPlayers()" class="w-full p-3 border rounded-xl bg-gray-50 font-bold text-sm">
-                            <option value="">Group...</option>
-                            <option value="Group 1">1</option><option value="Group 2">2</option><option value="Group 3">3</option><option value="Group 4">4</option><option value="Group 5">5</option><option value="Group 6">6</option>
-                        </select>
-                        <select id="holeSelect" onchange="fetchCurrentHoleScores()" class="w-full p-3 border rounded-xl bg-gray-50 font-bold text-sm">
-                            <option value="1">Hole 1</option><option value="2">Hole 2</option><option value="3">Hole 3</option><option value="4">Hole 4</option><option value="5">Hole 5</option><option value="6">Hole 6</option><option value="7">Hole 7</option><option value="8">Hole 8</option><option value="9">Hole 9</option><option value="10">Hole 10</option><option value="11">Hole 11</option><option value="12">Hole 12</option><option value="13">Hole 13</option><option value="14">Hole 14</option><option value="15">Hole 15</option><option value="16">Hole 16</option><option value="17">Hole 17</option><option value="18">Hole 18</option>
-                        </select>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 max-w-lg mx-auto">
+                <h2 class="text-lg font-black text-center mb-4 uppercase italic">Select Group</h2>
+                <select id="groupSelect" onchange="loadGroupScorecard()" class="w-full p-4 border-2 rounded-xl bg-gray-50 font-black text-purple-900 text-lg appearance-none">
+                    <option value="">Choose a Group...</option>
+                    <option value="Group 1">Group 1</option><option value="Group 2">Group 2</option><option value="Group 3">Group 3</option><option value="Group 4">Group 4</option><option value="Group 5">Group 5</option><option value="Group 6">Group 6</option>
+                </select>
+            </div>
+
+            <div id="scorecard-entry-wrapper" class="hidden">
+                <div class="flex items-center justify-between mb-4 px-2">
+                    <h3 id="active-group-label" class="text-xl font-black uppercase italic text-purple-900">Group Scorecard</h3>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Auto-Saving Enabled</span>
                     </div>
                 </div>
 
-                <div id="current-scores-reference" class="bg-purple-950 p-5 rounded-2xl shadow-lg border border-purple-800 text-white mb-4 hidden">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center">
-                            <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse mr-2"></div>
-                            <h3 class="text-xs font-black uppercase tracking-widest text-purple-200">Current Recorded Scores</h3>
-                        </div>
-                        <span id="ref-hole-label" class="text-[10px] font-bold bg-purple-600 px-2 py-1 rounded">HOLE 1</span>
-                    </div>
-                    <div id="reference-list" class="space-y-3"></div>
+                <div class="scorecard-container mb-6">
+                    <table class="sc-table">
+                        <thead>
+                            <tr id="sc-header-row">
+                                <th class="sc-name-col">Player</th>
+                                <!-- Hole headers 1-18 injected here -->
+                                <th>TOT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sc-body">
+                            <!-- Player rows injected here -->
+                        </tbody>
+                    </table>
                 </div>
+                <div class="text-center p-4 bg-purple-50 rounded-xl border border-purple-100 text-purple-900 text-sm font-medium">
+                    Tap a cell to enter a score. The score will <strong>auto-save</strong> when you click away or move to the next hole.
+                </div>
+            </div>
 
-                <div class="bg-white p-5 rounded-2xl shadow-lg border border-gray-100 mb-4">
-                    <h2 class="text-lg font-black text-center mb-4 uppercase italic">Score Entry</h2>
-                    <div id="group-player-inputs" class="space-y-2 py-2">
-                        <div class="text-center py-6 text-gray-400 font-medium text-sm">Select a group to start entering scores</div>
-                    </div>
-                    <button id="submitBtn" onclick="submitScores()" disabled class="w-full bg-purple-700 text-white font-black py-4 rounded-xl shadow-lg disabled:opacity-30 uppercase text-sm mt-4">Submit Scores</button>
-                    <div id="statusMsg" class="text-center font-bold p-3 rounded-lg hidden text-sm"></div>
-                </div>
+            <div id="input-placeholder" class="text-center py-20 text-gray-400 font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Select a group to load the scorecard
             </div>
         </div>
 
+        <!-- View: Rules -->
         <div id="view-rules" class="view hidden">
             <div class="centered-container px-1">
                 <div class="giant-header mt-1">Qualifier Rules</div>
@@ -397,7 +376,6 @@
     <script>
         const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxviZ8COcQJHkjcK4iZp7XE2FBHrPozWNyGJrHBIpPDDpxHM2Nopeav_05tSvE0_TuxmA/exec";
         let favorites = JSON.parse(localStorage.getItem('golf_favs_bees') || '[]');
-        let currentGroupPlayers = []; 
         let cachedAllScores = null;
         let lastCacheTime = 0;
 
@@ -409,145 +387,6 @@
             return s;
         }
 
-        /**
-         * Correctly parses the course pars from the "All Scores" sheet data.
-         * Now searches for the row where the Name column contains "PAR".
-         */
-        function getCoursePars(data) {
-            const defaultPars = Array(18).fill(4);
-            if (!data || data.length === 0) return defaultPars;
-            
-            // Look specifically for the "PAR" row
-            const parRow = data.find(row => {
-                const vals = Object.values(row);
-                return String(vals[1] || "").trim().toUpperCase() === "PAR";
-            });
-
-            if (!parRow) return defaultPars;
-            
-            const values = Object.values(parRow); 
-            const pars = [];
-            
-            // Map Columns for Pars (Same mapping as player scores):
-            // Hole 1: Index 2 -> Hole 9: Index 10
-            // Index 11 is OUT Total (Skip)
-            // Hole 10: Index 12 -> Hole 18: Index 20
-            
-            try {
-                for (let i = 2; i <= 10; i++) {
-                    const val = parseInt(values[i]);
-                    pars.push(isNaN(val) ? 4 : val);
-                }
-                for (let i = 12; i <= 20; i++) {
-                    const val = parseInt(values[i]);
-                    pars.push(isNaN(val) ? 4 : val);
-                }
-                return pars;
-            } catch (e) {
-                return defaultPars;
-            }
-        }
-
-        function openScorecard(playerName) {
-            if (!cachedAllScores) return;
-            const player = cachedAllScores.find(p => {
-                const vals = Object.values(p);
-                // Name is in Column B (Index 1)
-                return String(vals[1] || "").trim().toUpperCase() === playerName.trim().toUpperCase();
-            });
-
-            if (!player) return;
-
-            const modal = document.getElementById('scorecard-modal');
-            const nameEl = document.getElementById('modal-player-name');
-            const gridEl = document.getElementById('modal-score-grid');
-            
-            nameEl.innerText = playerName;
-            modal.style.display = 'flex';
-
-            const playerValues = Object.values(player);
-            const coursePars = getCoursePars(cachedAllScores);
-            
-            let outTotal = 0;
-            let inTotal = 0;
-            let relToPar = 0;
-            let gridHtml = '';
-
-            for (let i = 1; i <= 18; i++) {
-                const par = coursePars[i-1];
-                let colIdx;
-                
-                // Column Indices (Skipping B index 1 and L index 11):
-                // Holes 1-9: Indices 2, 3, 4, 5, 6, 7, 8, 9, 10
-                // Holes 10-18: Indices 12, 13, 14, 15, 16, 17, 18, 19, 20
-                if (i <= 9) {
-                    colIdx = i + 1; 
-                } else {
-                    colIdx = i + 2; 
-                }
-
-                const score = playerValues[colIdx] || "";
-                const numScore = parseInt(score);
-                let scoreMarkup = score || '-';
-                
-                if (!isNaN(numScore) && numScore > 0) {
-                    if (i <= 9) outTotal += numScore;
-                    else inTotal += numScore;
-                    relToPar += (numScore - par);
-
-                    if (numScore < par) {
-                        scoreMarkup = `<div class="score-circle text-red-500 font-black">${numScore}</div>`;
-                    } else if (numScore === par + 1) {
-                        scoreMarkup = `<div class="score-square text-gray-800 font-black">${numScore}</div>`;
-                    } else if (numScore > par + 1) {
-                        scoreMarkup = `<div class="score-double-square"><div class="inner-square text-gray-800 font-black">${numScore}</div></div>`;
-                    } else {
-                        scoreMarkup = `<span class="text-gray-800 font-black text-lg">${numScore}</span>`;
-                    }
-                }
-
-                gridHtml += `
-                    <div class="hole-box shadow-sm">
-                        <div class="absolute top-1 left-1.5 text-[7px] font-black text-gray-300">H${i}</div>
-                        <div class="text-[7px] font-black text-purple-300 uppercase mb-1">PAR ${par}</div>
-                        <div class="h-10 flex items-center justify-center">
-                            ${scoreMarkup}
-                        </div>
-                    </div>
-                `;
-            }
-
-            gridEl.innerHTML = gridHtml;
-            document.getElementById('modal-out-score').innerText = outTotal || '-';
-            document.getElementById('modal-total-score').innerText = (outTotal + inTotal) || '-';
-            document.getElementById('modal-rel-score').innerText = formatRelationToPar(relToPar);
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeModal(e) {
-            document.getElementById('scorecard-modal').style.display = 'none';
-            document.body.style.overflow = '';
-        }
-
-        function toggleFavorite(name) {
-            if (favorites.includes(name)) favorites = favorites.filter(f => f !== name);
-            else favorites.push(name);
-            localStorage.setItem('golf_favs_bees', JSON.stringify(favorites));
-            refreshData();
-        }
-
-        function createSkeleton(count) {
-            return `<div class="giant-header skeleton h-12 w-full mt-1 mb-6 rounded-xl opacity-20"></div>` + 
-                   Array(count).fill(0).map(() => `
-                <div class="bg-white p-4 rounded-xl shadow-sm lb-grid opacity-40 mb-1">
-                    <div class="skeleton h-4 w-4 rounded"></div>
-                    <div class="skeleton h-4 w-3/4 rounded ml-2"></div>
-                    <div class="skeleton h-6 w-8 rounded ml-auto"></div>
-                    <div class="skeleton h-4 w-6 rounded ml-auto"></div>
-                </div>
-            `).join('');
-        }
-
         function setView(view) {
             document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${view}`).classList.remove('hidden');
@@ -557,241 +396,224 @@
             if (view !== 'rules' && view !== 'input') refreshData();
         }
 
-        const createRow = (p, index) => {
-            const keys = Object.keys(p);
-            const rank = p[keys[0]] || "-";
-            const name = p[keys[1]] || "Unknown";
-            const score = formatRelationToPar(p[keys[2]] || "E");
-            const holes = p[keys[3]] || "0";
-            const isUnder = String(score).startsWith('-');
-            const isFav = favorites.includes(name);
-
-            return `
-                <div class="bg-white py-2.5 px-3 rounded-xl shadow-sm border border-gray-200 lb-grid row-animate" style="animation-delay: ${index * 0.05}s">
-                    <div class="rank-cell tabular-nums">${rank}</div>
-                    <div class="name-cell">
-                        <span onclick="toggleFavorite('${name}')" class="fav-star ${isFav ? 'active' : ''}">${isFav ? '★' : '☆'}</span>
-                        <span class="name-text" onclick="openScorecard('${name}')">${name}</span>
-                    </div>
-                    <div class="score-cell tabular-nums ${isUnder ? 'text-red-600' : (score.startsWith('+') ? 'text-gray-900' : 'text-gray-800')}">${score}</div>
-                    <div class="holes-cell tabular-nums">${holes}</div>
-                </div>
-            `;
-        };
-
         async function fetchLeaderboard() {
             const list = document.getElementById('leaderboard-list');
             list.innerHTML = createSkeleton(10);
             try {
                 const res = await fetch(`${DEPLOY_URL}?action=getLeaderboard`);
                 const data = await res.json();
-                
-                let results = data.filter((p, index) => {
-                    const keys = Object.keys(p);
-                    const nameVal = String(p[keys[1]] || "").trim().toUpperCase();
-                    if (nameVal === "PLAYER" || nameVal === "" || nameVal.includes("TEAM") || nameVal.includes("LEADERS")) return false;
-                    return true;
+                let results = data.filter(p => {
+                    const nameVal = String(Object.values(p)[1] || "").trim().toUpperCase();
+                    return nameVal !== "PLAYER" && nameVal !== "" && !nameVal.includes("TEAM") && !nameVal.includes("LEADERS");
                 });
-
-                const sortedResults = [...results].sort((a, b) => {
-                    const nameA = a[Object.keys(a)[1]];
-                    const nameB = b[Object.keys(b)[1]];
-                    return (favorites.includes(nameB) ? 1 : 0) - (favorites.includes(nameA) ? 1 : 0);
-                });
-
-                let html = `<div class="giant-header mt-1">Qualifier Leaderboard</div>
-                            <div class="sub-header-labels"><div>RK</div><div class="text-center">PLAYER</div><div class="text-center">SC</div><div class="text-right">THRU</div></div>`;
+                const sortedResults = [...results].sort((a, b) => (favorites.includes(Object.values(b)[1]) ? 1 : 0) - (favorites.includes(Object.values(a)[1]) ? 1 : 0));
+                let html = `<div class="giant-header mt-1">Qualifier Leaderboard</div><div class="sub-header-labels"><div>RK</div><div class="text-center">PLAYER</div><div class="text-center">SC</div><div class="text-right">THRU</div></div>`;
                 list.innerHTML = html + sortedResults.map((p, i) => createRow(p, i)).join('');
-                
-                const res2 = await fetch(`${DEPLOY_URL}?action=getAllScores`);
-                cachedAllScores = await res2.json();
-                lastCacheTime = Date.now();
             } catch (e) { list.innerHTML = `<div class="p-10 text-center text-red-500 font-bold">Connection Error.</div>`; }
         }
 
-        async function fetchPlayerScores() {
-            const list = document.getElementById('scores-list');
-            list.innerHTML = createSkeleton(8);
+        async function fetchAllScores() {
             try {
                 const res = await fetch(`${DEPLOY_URL}?action=getAllScores`);
-                const data = await res.json();
-                cachedAllScores = data;
+                cachedAllScores = await res.json();
                 lastCacheTime = Date.now();
-                
-                // Filter out headers and the PAR row
-                const players = data.filter(p => {
-                   const vals = Object.values(p);
-                   const name = String(vals[1] || "").trim().toUpperCase();
-                   return name && name !== "PLAYER NAME" && name !== "NAME" && name !== "0" && name !== "PLAYER" && name !== "PAR";
-                });
-
-                if (players.length === 0) {
-                    list.innerHTML = `<div class="p-10 text-center text-gray-500 font-bold">No scores reported yet.</div>`;
-                    return;
-                }
-
-                list.innerHTML = `<div class="sub-header-labels grid-cols-3 !grid" style="grid-template-columns: 1fr 55px 45px"><div>PLAYER</div><div class="text-center">SC</div><div class="text-right">THRU</div></div>` + 
-                players.map((p, i) => {
-                    const vals = Object.values(p);
-                    const name = vals[1] || "Unknown"; 
-                    const thru = vals[23] || "0"; 
-                    const score = formatRelationToPar(vals[24] || "E");
-                    const isUnder = String(score).startsWith('-');
-                    
-                    return `
-                        <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between row-animate" style="animation-delay: ${i*0.02}s">
-                            <span class="font-bold text-gray-800 uppercase flex items-center overflow-hidden flex-1 cursor-pointer" onclick="openScorecard('${name}')">
-                                <span class="truncate text-[0.85rem] hover:text-purple-700">${name}</span>
-                            </span>
-                            <span class="w-14 text-center tabular-nums text-lg font-black ${isUnder ? 'text-red-600' : 'text-purple-800'}">${score}</span>
-                            <span class="w-10 text-right tabular-nums text-xs font-bold text-gray-400">${thru}</span>
-                        </div>`;
-                }).join('');
-            } catch (e) { 
-                list.innerHTML = `<div class="p-10 text-center text-red-500">Error loading scores.</div>`; 
-            }
+                return cachedAllScores;
+            } catch (e) { return null; }
         }
 
-        async function loadGroupPlayers() {
-            const groupVal = document.getElementById('groupSelect').value;
-            const container = document.getElementById('group-player-inputs');
-            if (!groupVal) {
-                currentGroupPlayers = [];
-                container.innerHTML = `<div class="text-center py-6 text-gray-400 font-medium text-sm">Select a group to start entering scores</div>`;
-                document.getElementById('current-scores-reference').classList.add('hidden');
-                return;
-            }
-            const groupTab = groupVal.replace("Group ", "G");
-            container.innerHTML = `<div class="flex justify-center py-4"><div class="skeleton h-8 w-full rounded-xl opacity-20"></div></div>`;
-            try {
-                const res = await fetch(`${DEPLOY_URL}?action=getGroupPlayers&groupTab=${encodeURIComponent(groupTab)}`);
-                const players = await res.json();
-                currentGroupPlayers = players.filter(n => n && n !== "Name" && n !== "Hole");
-                
-                container.innerHTML = currentGroupPlayers.map(name => `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200">
-                        <span class="font-bold text-gray-700 text-[0.8rem] uppercase truncate mr-2">${name}</span>
-                        <input type="number" inputmode="numeric" data-player="${name}" placeholder="Score" class="player-score-input w-16 p-2 border-2 rounded-lg text-center font-bold text-xl outline-none focus:border-purple-500">
-                    </div>
-                `).join('');
-                document.getElementById('submitBtn').disabled = false;
-                
-                fetchCurrentHoleScores(true);
-            } catch (e) { container.innerHTML = `<div class="text-red-500 text-center">Error loading players.</div>`; }
+        const createRow = (p, index) => {
+            const vals = Object.values(p);
+            const rank = vals[0] || "-";
+            const name = vals[1] || "Unknown";
+            const score = formatRelationToPar(vals[2] || "E");
+            const holes = vals[3] || "0";
+            const isUnder = String(score).startsWith('-');
+            const isFav = favorites.includes(name);
+            return `<div class="bg-white py-2.5 px-3 rounded-xl shadow-sm border border-gray-200 lb-grid row-animate" style="animation-delay: ${index * 0.05}s"><div class="rank-cell tabular-nums">${rank}</div><div class="name-cell"><span onclick="toggleFavorite('${name}')" class="fav-star ${isFav ? 'active' : ''}">${isFav ? '★' : '☆'}</span><span class="name-text" onclick="openScorecard('${name}')">${name}</span></div><div class="score-cell tabular-nums ${isUnder ? 'text-red-600' : (score === 'E' ? 'text-gray-800' : 'text-gray-900')}">${score}</div><div class="holes-cell tabular-nums">${holes}</div></div>`;
+        };
+
+        function createSkeleton(count) {
+            return `<div class="giant-header skeleton h-12 w-full mt-1 mb-6 rounded-xl opacity-20"></div>` + 
+                   Array(count).fill(0).map(() => `<div class="bg-white p-4 rounded-xl shadow-sm lb-grid opacity-40 mb-1"><div class="skeleton h-4 w-4 rounded"></div><div class="skeleton h-4 w-3/4 rounded ml-2"></div><div class="skeleton h-6 w-8 rounded ml-auto"></div><div class="skeleton h-4 w-6 rounded ml-auto"></div></div>`).join('');
         }
 
-        async function fetchCurrentHoleScores(force = false) {
-            const groupVal = document.getElementById('groupSelect').value;
-            const hole = document.getElementById('holeSelect').value;
-            const refBox = document.getElementById('current-scores-reference');
-            const refList = document.getElementById('reference-list');
-            const refHoleLabel = document.getElementById('ref-hole-label');
-
-            if (!groupVal || currentGroupPlayers.length === 0) {
-                refBox.classList.add('hidden');
-                return;
-            }
-
-            refBox.classList.remove('hidden');
-            refHoleLabel.innerText = `HOLE ${hole}`;
-
-            try {
-                let data = cachedAllScores;
-                if (force || !data || (Date.now() - lastCacheTime > 30000)) {
-                    const res = await fetch(`${DEPLOY_URL}?action=getAllScores`);
-                    data = await res.json();
-                    cachedAllScores = data;
-                    lastCacheTime = Date.now();
-                }
-                
-                const groupData = currentGroupPlayers.map(playerName => {
-                    const foundRow = data.find(row => {
-                        const rowName = String(Object.values(row)[1] || "").trim().toUpperCase();
-                        return rowName === playerName.trim().toUpperCase();
-                    });
-                    
-                    let score = null;
-                    if (foundRow) {
-                        const vals = Object.values(foundRow);
-                        const holeNum = parseInt(hole);
-                        const colIdx = holeNum <= 9 ? holeNum + 1 : holeNum + 2;
-                        score = vals[colIdx];
-                    }
-                    const hasScore = (score !== null && score !== undefined && String(score).trim() !== "" && String(score).trim() !== "0");
-                    return { name: playerName, score: hasScore ? score : "NOT ENTERED", isValid: hasScore };
-                });
-
-                refList.innerHTML = groupData.map(p => `
-                    <div class="flex items-center justify-between border-b border-purple-800/50 pb-2 last:border-0 last:pb-0">
-                        <span class="text-xs font-bold text-purple-200 uppercase truncate pr-4">${p.name}</span>
-                        <span class="text-sm font-black tabular-nums ${p.isValid ? 'text-green-400' : 'text-purple-400 italic text-[10px]'}">
-                            ${p.score}
-                        </span>
-                    </div>
-                `).join('');
-            } catch (e) {
-                refList.innerHTML = `<div class="text-xs text-red-400 text-center">Ref error. Tap refresh.</div>`;
-            }
-        }
-
-        async function submitScores() {
-            const groupVal = document.getElementById('groupSelect').value;
-            const groupTab = groupVal.replace("Group ", "G");
-            const hole = document.getElementById('holeSelect').value;
-            const btn = document.getElementById('submitBtn');
-            const scores = {};
-            let hasScores = false;
-            document.querySelectorAll('.player-score-input').forEach(i => { 
-                if(i.value) { scores[i.getAttribute('data-player')] = i.value; hasScores = true; }
-            });
-            if (!hasScores) return showStatus("Enter a score.", false);
-            btn.disabled = true; btn.innerText = "SUBMITTING...";
-            try {
-                const response = await fetch(DEPLOY_URL, { method: 'POST', body: JSON.stringify({ groupTab, holeNum: hole, scores }) });
-                const result = await response.json();
-                if (result.result === "success") {
-                    showStatus(`✓ Hole ${hole} updated!`, true);
-                    document.querySelectorAll('.player-score-input').forEach(i => i.value = '');
-                    await fetchCurrentHoleScores(true); 
-                } else showStatus("Submission failed.", false);
-            } catch (e) { showStatus("Network error.", false); }
-            finally { btn.disabled = false; btn.innerText = "SUBMIT SCORES"; }
-        }
-
-        function showStatus(msg, success) {
-            const s = document.getElementById('statusMsg');
-            s.innerText = msg; s.className = `text-center p-3 rounded-lg block font-bold mt-3 ${success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
-            s.classList.remove('hidden'); setTimeout(() => s.classList.add('hidden'), 5000);
-        }
-
-        function filterPlayerScores(q) {
-            const items = document.querySelectorAll('#scores-list .row-animate');
-            const searchTerm = q.toLowerCase();
-            items.forEach(i => i.style.display = i.innerText.toLowerCase().includes(searchTerm) ? '' : 'none');
+        function toggleFavorite(name) {
+            if (favorites.includes(name)) favorites = favorites.filter(f => f !== name);
+            else favorites.push(name);
+            localStorage.setItem('golf_favs_bees', JSON.stringify(favorites));
+            refreshData();
         }
 
         function refreshData() {
             const active = document.querySelector('nav button.active-tab')?.id;
             if (active === 'tab-leaderboard') fetchLeaderboard();
-            if (active === 'tab-scores') fetchPlayerScores();
-            if (active === 'tab-input') fetchCurrentHoleScores(true);
+            if (active === 'tab-scores') fetchPlayerScoresList();
         }
 
-        let startY = 0;
-        document.addEventListener('touchstart', e => { startY = e.touches[0].pageY; }, {passive: true});
-        document.addEventListener('touchmove', e => {
-            const y = e.touches[0].pageY;
-            if (window.scrollY === 0 && y > startY) {
-                const diff = Math.min((y - startY) / 2, 60);
-                const ptr = document.getElementById('pull-to-refresh');
-                if(ptr) ptr.style.height = diff + 'px';
+        async function fetchPlayerScoresList() {
+            const list = document.getElementById('scores-list');
+            list.innerHTML = createSkeleton(8);
+            const data = await fetchAllScores();
+            if (!data) return list.innerHTML = `<div class="p-10 text-center">Error loading scores.</div>`;
+            
+            let players = data.slice(2).filter(p => {
+                const name = String(Object.values(p)[1] || "").trim().toUpperCase();
+                return name !== "" && name !== "PLAYER" && name !== "NAME";
+            });
+
+            list.innerHTML = `<div class="sub-header-labels"><div>GRP</div><div>PLAYER</div><div class="text-center">SC</div><div class="text-right">THRU</div></div>` + 
+            players.map((p, i) => {
+                const v = Object.values(p);
+                const scoreStr = formatRelationToPar(v[24] || "E");
+                return `<div class="bg-white py-2.5 px-3 rounded-xl shadow-sm border border-gray-200 lb-grid row-animate" style="animation-delay: ${i*0.02}s"><div class="rank-cell tabular-nums">${v[0] || '-'}</div><div class="name-cell"><span class="name-text" onclick="openScorecard('${v[1]}')">${v[1]}</span></div><div class="score-cell tabular-nums">${scoreStr}</div><div class="holes-cell tabular-nums">${v[23] || '0'}</div></div>`;
+            }).join('');
+        }
+
+        // --- OVERHAULED SCORECARD LOGIC ---
+
+        async function loadGroupScorecard() {
+            const groupVal = document.getElementById('groupSelect').value;
+            const wrapper = document.getElementById('scorecard-entry-wrapper');
+            const placeholder = document.getElementById('input-placeholder');
+            
+            if (!groupVal) {
+                wrapper.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                return;
             }
-        }, {passive: true});
-        document.addEventListener('touchend', e => {
-            const ptr = document.getElementById('pull-to-refresh');
-            if (ptr && parseInt(ptr.style.height) > 50) refreshData();
-            if (ptr) ptr.style.height = '0px';
-        });
+
+            placeholder.classList.add('hidden');
+            wrapper.classList.remove('hidden');
+            document.getElementById('active-group-label').innerText = groupVal;
+
+            // Setup Header Row (Holes 1-18)
+            const headerRow = document.getElementById('sc-header-row');
+            headerRow.innerHTML = `<th class="sc-name-col">Player</th>` + 
+                Array.from({length: 18}, (_, i) => `<th>${i+1}</th>`).join('') + 
+                `<th class="sc-total-col">TOT</th>`;
+
+            const scBody = document.getElementById('sc-body');
+            scBody.innerHTML = `<tr><td colspan="20" class="py-10 text-center text-gray-400 font-bold italic animate-pulse">Loading Live Scores...</td></tr>`;
+
+            // Fetch Current Group & All Scores
+            const groupTab = groupVal.replace("Group ", "G");
+            try {
+                const [playersRes, scoresRes] = await Promise.all([
+                    fetch(`${DEPLOY_URL}?action=getGroupPlayers&groupTab=${encodeURIComponent(groupTab)}`),
+                    fetch(`${DEPLOY_URL}?action=getAllScores`)
+                ]);
+                
+                const playerNames = (await playersRes.json()).filter(n => n && n !== "Name" && n !== "Hole");
+                cachedAllScores = await scoresRes.json();
+                
+                let rowsHtml = '';
+                playerNames.forEach(name => {
+                    const playerData = cachedAllScores.find(row => String(Object.values(row)[1]).trim().toUpperCase() === name.trim().toUpperCase());
+                    const values = playerData ? Object.values(playerData) : Array(26).fill("");
+                    
+                    let total = 0;
+                    let holeInputs = '';
+                    for (let h = 1; h <= 18; h++) {
+                        const colIdx = h <= 9 ? h + 1 : h + 2;
+                        const score = values[colIdx] || "";
+                        if (score && !isNaN(score)) total += parseInt(score);
+                        holeInputs += `<td><input type="number" inputmode="numeric" value="${score}" 
+                            onblur="autoSaveScore(this, '${name}', ${h})" 
+                            class="sc-input" data-player="${name}" data-hole="${h}"></td>`;
+                    }
+                    
+                    rowsHtml += `<tr>
+                        <td class="sc-name-col">${name}</td>
+                        ${holeInputs}
+                        <td class="sc-total-col" id="total-${name.replace(/\s+/g, '')}">${total || '-'}</td>
+                    </tr>`;
+                });
+                scBody.innerHTML = rowsHtml;
+
+            } catch (e) {
+                scBody.innerHTML = `<tr><td colspan="20" class="py-10 text-center text-red-500 font-bold">Failed to load scorecard. Check connection.</td></tr>`;
+            }
+        }
+
+        async function autoSaveScore(inputEl, playerName, holeNum) {
+            const score = inputEl.value.trim();
+            const originalValue = inputEl.getAttribute('data-last-saved') || "";
+            
+            // Only save if it's a number and it actually changed
+            if (score === originalValue) return;
+            if (score !== "" && isNaN(score)) return;
+
+            inputEl.classList.add('updating');
+            
+            const groupVal = document.getElementById('groupSelect').value;
+            const groupTab = groupVal.replace("Group ", "G");
+            const scores = {};
+            scores[playerName] = score;
+
+            try {
+                const response = await fetch(DEPLOY_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ groupTab, holeNum, scores }) 
+                });
+                const result = await response.json();
+                
+                if (result.result === "success") {
+                    inputEl.setAttribute('data-last-saved', score);
+                    // Update Local Total display
+                    updateLocalTotal(playerName);
+                } else {
+                    inputEl.style.borderColor = "#ef4444";
+                }
+            } catch (e) {
+                inputEl.style.borderColor = "#ef4444";
+            } finally {
+                inputEl.classList.remove('updating');
+            }
+        }
+
+        function updateLocalTotal(playerName) {
+            const inputs = document.querySelectorAll(`input[data-player="${playerName}"]`);
+            let total = 0;
+            inputs.forEach(i => {
+                if (i.value && !isNaN(i.value)) total += parseInt(i.value);
+            });
+            const totalEl = document.getElementById(`total-${playerName.replace(/\s+/g, '')}`);
+            if (totalEl) totalEl.innerText = total || '-';
+        }
+
+        function openScorecard(playerName) {
+            if (!cachedAllScores) return;
+            const player = cachedAllScores.find(p => String(Object.values(p)[1]).trim().toUpperCase() === playerName.trim().toUpperCase());
+            if (!player) return;
+
+            const modal = document.getElementById('scorecard-modal');
+            document.getElementById('modal-player-name').innerText = playerName;
+            modal.style.display = 'flex';
+
+            const values = Object.values(player);
+            let bodyHtml = `<div class="grid grid-cols-3 gap-2">`;
+            for (let h = 1; h <= 18; h++) {
+                const colIdx = h <= 9 ? h + 1 : h + 2;
+                bodyHtml += `<div class="bg-gray-50 p-3 rounded-lg text-center border">
+                    <div class="text-[8px] font-bold text-gray-400 uppercase">Hole ${h}</div>
+                    <div class="text-xl font-black text-purple-900">${values[colIdx] || '-'}</div>
+                </div>`;
+            }
+            bodyHtml += `</div>`;
+            document.getElementById('modal-content-body').innerHTML = bodyHtml;
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('scorecard-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        function filterPlayerScores(q) {
+            const items = document.querySelectorAll('#scores-list .row-animate');
+            const term = q.toLowerCase();
+            items.forEach(i => i.style.display = i.innerText.toLowerCase().includes(term) ? '' : 'none');
+        }
 
         window.onload = () => fetchLeaderboard();
     </script>
