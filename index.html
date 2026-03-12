@@ -131,21 +131,32 @@
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        /* --- Clubhouse Scorecard Styles --- */
-        .clubhouse-card {
-            background-color: var(--card-cream);
-            border: 2px solid #d1d5db;
-            border-radius: 8px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        /* --- Clubhouse Scorecard Styles (FIXED SCROLLING) --- */
+        .sc-outer-container {
+            width: 100%;
             overflow: hidden;
-            font-family: 'Inter', sans-serif;
-            position: relative;
+            border: 2px solid #d1d5db;
+            border-radius: 12px;
+            background-color: var(--card-cream);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .sc-table-scroll-area {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sc-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: max-content; /* Important to keep it from scrunching */
+            min-width: 100%;
         }
 
         .sc-header-band {
             background: #2d3748;
             color: white;
-            padding: 6px 12px;
+            padding: 8px 12px;
             font-size: 10px;
             font-weight: 900;
             text-transform: uppercase;
@@ -154,68 +165,66 @@
             justify-content: space-between;
             position: sticky;
             left: 0;
-            width: 100%;
-            z-index: 30;
         }
 
-        .sc-table-wrapper {
-            overflow-x: auto;
-            position: relative;
+        /* STICKY COLUMN LOGIC */
+        .sc-name-col {
+            position: sticky !important;
+            left: 0;
+            z-index: 10;
+            background: #edf2f7 !important;
+            width: 100px;
+            min-width: 100px;
+            max-width: 100px;
+            text-align: left !important;
+            padding-left: 8px !important;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 10px;
+            color: #2d3748;
+            border-right: 2px solid #cbd5e0 !important;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .sc-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            table-layout: fixed;
+        /* Ensure header row also has sticky column */
+        thead tr th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 11;
+            background: #f7fafc;
         }
 
         .sc-table th, .sc-table td {
             border-right: 1px solid #cbd5e0;
             border-bottom: 1px solid #cbd5e0;
             text-align: center;
-            padding: 6px 2px;
-            font-size: 11px;
-        }
-
-        /* Sticky Name Column */
-        .sc-name-col {
-            width: 110px;
-            min-width: 110px;
-            text-align: left !important;
-            padding-left: 10px !important;
-            background: #edf2f7;
-            font-weight: 900;
-            text-transform: uppercase;
-            font-size: 10px;
-            color: #2d3748;
-            position: sticky !important;
-            left: 0;
-            z-index: 20;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            padding: 8px 4px;
+            width: 40px; /* Fixed width for hole columns */
+            min-width: 40px;
         }
 
         .hole-label {
             background: #f7fafc;
             color: #718096;
             font-weight: 900;
-            height: 30px;
-            position: sticky;
-            top: 0;
-            z-index: 25;
+            font-size: 9px;
         }
 
         .sc-input {
             width: 100%;
-            height: 32px;
+            height: 38px;
             background: transparent;
             text-align: center;
             font-weight: 900;
-            font-size: 16px;
+            font-size: 18px;
             border: none;
             outline: none;
             color: #1a202c;
-            transition: background-color 0.3s ease;
+            border-radius: 4px;
+            transition: all 0.2s ease;
         }
 
         .sc-input:focus {
@@ -244,18 +253,21 @@
             font-weight: 900;
             color: #2d3748;
             width: 45px;
+            min-width: 45px;
         }
 
         .total-final-col {
             background: #2d3748;
             color: white;
             font-weight: 900;
-            width: 50px;
+            width: 55px;
+            min-width: 55px;
         }
 
         .sc-section-divider {
             background: #a0aec0 !important;
-            width: 4px !important;
+            width: 6px !important;
+            min-width: 6px !important;
             padding: 0 !important;
         }
 
@@ -287,7 +299,7 @@
             .rank-cell { font-size: 1rem; }
             .score-cell { font-size: 1.5rem; }
             .giant-header { font-size: 1.5rem; }
-            .sc-name-col { width: 150px; min-width: 150px; }
+            .sc-name-col { width: 140px; min-width: 140px; }
         }
 
         .nav-scroll::-webkit-scrollbar { display: none; }
@@ -372,17 +384,17 @@
                 </select>
             </div>
 
-            <div id="scorecard-entry-wrapper" class="hidden pb-4">
-                <div class="clubhouse-card">
+            <div id="scorecard-entry-wrapper" class="hidden pb-10">
+                <div class="sc-outer-container">
                     <div class="sc-header-band">
                         <span id="active-group-label">OFFICIAL SCORECARD</span>
                         <span>QUALIFYING ROUND</span>
                     </div>
-                    <div class="sc-table-wrapper">
+                    <div class="sc-table-scroll-area">
                         <table class="sc-table">
                             <thead>
                                 <tr class="hole-label">
-                                    <th class="sc-name-col">HOLE</th>
+                                    <th class="sc-name-col">PLAYER</th>
                                     <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
                                     <th class="summary-col">OUT</th>
                                     <th class="sc-section-divider"></th>
@@ -395,8 +407,8 @@
                         </table>
                     </div>
                 </div>
-                <div class="mt-4 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                    Swipe left/right to view all holes • Live syncing enabled
+                <div class="mt-4 px-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">
+                    Swipe horizontally to view all 18 holes <br> Scores sync automatically on entry
                 </div>
             </div>
 
