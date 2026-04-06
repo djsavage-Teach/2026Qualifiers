@@ -486,7 +486,7 @@
         <div id="view-input" class="view hidden">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 max-w-lg mx-auto text-center">
                 <h2 class="text-lg font-black mb-4 uppercase italic text-purple-900">Select Group</h2>
-                <select id="groupSelect" onchange="loadGroupScorecard()" class="w-full p-4 border-2 rounded-xl bg-gray-50 font-black text-purple-900 text-lg appearance-none mb-4">
+                <select id="groupSelect" onchange="handleGroupChange()" class="w-full p-4 border-2 rounded-xl bg-gray-50 font-black text-purple-900 text-lg appearance-none mb-4">
                     <option value="">Choose a Group...</option>
                     <option value="Group 1">Group 1</option><option value="Group 2">Group 2</option><option value="Group 3">Group 3</option><option value="Group 4">Group 4</option><option value="Group 5">Group 5</option><option value="Group 6">Group 6</option>
                 </select>
@@ -576,7 +576,15 @@
             }
         });
 
+        // 1. New Logic: Persistence & Re-activation
+        function handleGroupChange() {
+            const groupVal = document.getElementById('groupSelect').value;
+            localStorage.setItem('golf_last_group_bees', groupVal);
+            loadGroupScorecard();
+        }
+
         function setView(view) {
+            localStorage.setItem('golf_last_view_bees', view);
             document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
             document.getElementById(`view-${view}`).classList.remove('hidden');
             document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
@@ -585,6 +593,19 @@
             if (view !== 'rules' && view !== 'input') refreshData();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        // Auto-refresh when phone is unlocked/tab returned to
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                const currentView = localStorage.getItem('golf_last_view_bees') || 'leaderboard';
+                if (currentView === 'input') {
+                    const savedGroup = localStorage.getItem('golf_last_group_bees');
+                    if (savedGroup) loadGroupScorecard();
+                } else {
+                    refreshData();
+                }
+            }
+        });
 
         function formatRelationToPar(scoreStr) {
             const s = String(scoreStr || "").trim().toUpperCase();
@@ -833,7 +854,17 @@
             document.querySelectorAll('#scores-list .row-animate').forEach(i => i.style.display = i.innerText.toLowerCase().includes(term) ? '' : 'none');
         }
 
-        window.onload = () => fetchLeaderboard();
+        window.onload = () => {
+            const lastView = localStorage.getItem('golf_last_view_bees') || 'leaderboard';
+            const lastGroup = localStorage.getItem('golf_last_group_bees');
+            
+            setView(lastView);
+            
+            if (lastView === 'input' && lastGroup) {
+                document.getElementById('groupSelect').value = lastGroup;
+                loadGroupScorecard();
+            }
+        };
     </script>
 </body>
 </html>
